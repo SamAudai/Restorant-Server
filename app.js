@@ -3,6 +3,8 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var fileStore = require('session-file-store')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -11,7 +13,6 @@ var leaderRouter = require('./routes/leaderRouter');
 var promoRouter = require('./routes/promoRouter');
 
 const mongoose = require('mongoose');
-const Dishes = require('./models/dishes');
 
 const url = 'mongodb://localhost:27017/conFusion';
 const contact = mongoose.connect(url);
@@ -31,11 +32,19 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser('12345-67890-09876-54321')); //12345-67890-09876-54321 is secret key
+//app.use(cookieParser('12345-67890-09876-54321')); //12345-67890-09876-54321 is secret key
+app.use(session({ //session middleware
+  name: 'session-id',
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new fileStore()
+}));
 
 function auth (req, res, next) {
 
-  if (!req.signedCookies.user) {
+  console.log(req.session);
+  if (!req.session.user) {
     var authHeader = req.headers.authorization;
     if (!authHeader) {
         var err = new Error('You are not authenticated!');
@@ -46,18 +55,19 @@ function auth (req, res, next) {
     var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
     var user = auth[0];
     var pass = auth[1];
-    if (user === 'admin' && pass === 'password') {
-        res.cookie('user','admin',{signed: true});
+    if (user == 'admin' && pass == 'password') {
+        req.session.user = 'admin';
         return next(); // authorized
     } else {
         var err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic');              
+        req.setHeader('WWW-Authenticate', 'Basic');              
         err.status = 401;
         return next(err);
     }
   }
   else {
-      if (req.signedCookies.user === 'admin') {
+      if (req.session.user === 'admin') {
+         console.log('req.session: ',req.session);
           return next();
       }
       else {
