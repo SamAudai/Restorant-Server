@@ -4,11 +4,11 @@ var passportLocalMongoose = require('passport-local-mongoose');
 
 var User = new Schema({ //remove username and password because is call authomatically in passport-local-mongoose module   
     firstname: {
-        type: string,
+        type: String,
         default: ''
     },
     lastname: {
-        type: string,
+        type: String,
         default: ''
     },
     admin:   {
