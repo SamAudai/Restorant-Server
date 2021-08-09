@@ -40,7 +40,7 @@ exports.verifyUser = passport.authenticate('jwt', { session: false });
 
 exports.verifyAdmin = (req, res, next) => {
 
-    if (req.user.admin) {
+    if (req.user.admin === true) {
         console.log("User is admin");
         return next();
     }
